@@ -50,6 +50,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->prepare("UPDATE tournament_matches SET player1_score = ?, player2_score = ? WHERE id = ?");
         $stmt->execute([$score1, $score2, $matchId]);
 
+        // Update player profile stats
+        updateUserStats($pdo, $match['player1_id'], $score1, $score2);
+        updateUserStats($pdo, $match['player2_id'], $score2, $score1);
+
         // After updating score, try generating next round if all matches in this round are finished
         generateNextRoundIfReady($pdo, $match['tournament_id'], $match['round']);
 
@@ -57,6 +61,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 }
+function updateUserStats($pdo, $userId, $goalsScored, $goalsConceded) {
+    // Determine win/loss
+    $win = $goalsScored > $goalsConceded ? 1 : 0;
+    $loss = $goalsScored < $goalsConceded ? 1 : 0;
+    $draw = $goalsScored == $goalsConceded ? 1 : 0;
+
+    // Update user profile stats
+    $stmt = $pdo->prepare("
+        UPDATE users 
+        SET 
+            matches_played = matches_played + 1,
+            wins = wins + ?, 
+            losses = losses + ?, 
+            draws = draws + ?, 
+            goals_scored = goals_scored + ?, 
+            goals_conceded = goals_conceded + ? 
+        WHERE id = ?
+    ");
+    $stmt->execute([$win, $loss, $draw, $goalsScored, $goalsConceded, $userId]);
+}
+
 
 function getRoundNameByMatchCount($matchCount) {
     switch ($matchCount) {
@@ -159,7 +184,10 @@ function generateNextRoundIfReady($pdo, $tournamentId, $currentRound) {
             $losers[] = $m['player2_id'];
         }
     }
-
+    // 🛑 Stop if tournament is over (only one winner remains)
+    if (count($winners) === 1) {
+        return;
+    }
     $winnerCount = count($winners);
     $nextRoundSize = getNextPowerOfTwoAtLeast($winnerCount);
     $playersForNextRound = $winners;

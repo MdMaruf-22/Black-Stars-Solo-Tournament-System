@@ -28,7 +28,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['league_id'])) {
 }
 
 // Fetch all leagues
-$stmt = $pdo->query("SELECT * FROM leagues ORDER BY created_at DESC");
+$stmt = $pdo->query("SELECT * FROM leagues WHERE status = 'upcoming' ORDER BY created_at DESC");
 $leagues = $stmt->fetchAll();
 ?>
 

@@ -10,7 +10,7 @@ if (!isset($_SESSION['admin_id'])) {
 $message = "";
 
 // Get leagues
-$stmt = $pdo->query("SELECT * FROM leagues ORDER BY created_at DESC");
+$stmt = $pdo->query("SELECT * FROM leagues WHERE status = 'upcoming' ORDER BY created_at DESC");
 $leagues = $stmt->fetchAll();
 
 // Handle fixture generation

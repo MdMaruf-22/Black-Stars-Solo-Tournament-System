@@ -21,7 +21,7 @@ $stmt = $pdo->prepare("
             WHERE r.tournament_id = t.id AND r.player_id = ?
         ) AS requested
     FROM tournaments t
-    WHERE t.status != 'finished'
+    WHERE t.status = 'registration'
 ");
 $stmt->execute([$userId, $userId]);
 $tournaments = $stmt->fetchAll();

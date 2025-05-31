@@ -7,7 +7,13 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 
+if (!isset($_GET['tournament_id'])) {
+    echo "Tournament ID is missing.";
+    exit;
+}
+
 $userId = $_SESSION['user_id'];
+$tournamentId = $_GET['tournament_id'];
 
 $stmt = $pdo->prepare("
     SELECT m.*, t.name AS tournament_name, u1.username AS p1_name, u2.username AS p2_name
@@ -15,11 +21,13 @@ $stmt = $pdo->prepare("
     JOIN tournaments t ON m.tournament_id = t.id
     JOIN users u1 ON m.player1_id = u1.id
     JOIN users u2 ON m.player2_id = u2.id
-    WHERE m.player1_id = ? OR m.player2_id = ?
+    WHERE (m.player1_id = ? OR m.player2_id = ?)
+      AND m.tournament_id = ?
     ORDER BY m.round ASC
 ");
-$stmt->execute([$userId, $userId]);
+$stmt->execute([$userId, $userId, $tournamentId]);
 $matches = $stmt->fetchAll();
+
 ?>
 
 <!DOCTYPE html>

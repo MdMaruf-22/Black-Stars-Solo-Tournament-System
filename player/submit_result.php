@@ -15,6 +15,12 @@ if (!isset($_GET['match_id'])) {
 }
 
 $matchId = $_GET['match_id'];
+if (!isset($_GET['league_id'])) {
+    $_SESSION['flash'] = "League ID missing.";
+    header("Location: dashboard.php");
+    exit;
+}
+$leagueId = $_GET['league_id'];
 
 // Get match details
 $stmt = $pdo->prepare("
@@ -40,10 +46,47 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $score1 = (int) $_POST['score1'];
     $score2 = (int) $_POST['score2'];
 
+    // Update match result
     $stmt = $pdo->prepare("UPDATE matches SET player1_score = ?, player2_score = ? WHERE id = ?");
     $stmt->execute([$score1, $score2, $matchId]);
 
-    header("Location: matches.php");
+    // Determine outcome
+    $isDraw = $score1 === $score2;
+    $player1Win = $score1 > $score2;
+    $player2Win = $score2 > $score1;
+
+    // Update Player 1 stats
+    $stmt = $pdo->prepare("
+        UPDATE users
+        SET matches_played = matches_played + 1,
+            goals_scored = goals_scored + ?,
+            goals_conceded = goals_conceded + ?,
+            wins = wins + ?,
+            losses = losses + ?,
+            draws = draws + ?
+        WHERE id = ?
+    ");
+    $stmt->execute([
+        $score1,
+        $score2,
+        $player1Win ? 1 : 0,
+        $player2Win ? 1 : 0,
+        $isDraw ? 1 : 0,
+        $match['player1_id']
+    ]);
+
+    // Update Player 2 stats
+    $stmt->execute([
+        $score2,
+        $score1,
+        $player2Win ? 1 : 0,
+        $player1Win ? 1 : 0,
+        $isDraw ? 1 : 0,
+        $match['player2_id']
+    ]);
+
+    $_SESSION['flash'] = "✅ Result submitted successfully.";
+    header("Location: matches.php?league_id=$leagueId");
     exit;
 }
 ?>
@@ -104,9 +147,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         </form>
 
         <p class="mt-6 text-center">
-            <a href="matches.php" class="text-blue-600 hover:underline">← Back to Matches</a>
+            <a href="matches.php?league_id=<?php echo $leagueId; ?>" class="text-blue-600 hover:underline">← Back to Matches</a>
         </p>
     </div>
 </body>
 </html>
-

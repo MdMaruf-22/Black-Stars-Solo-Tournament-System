@@ -63,7 +63,17 @@ $tournaments = $stmt->fetchAll();
                                             class="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600">
                                             See Requests
                                         </a>
+
+                                    <?php elseif ($t['status'] === 'ongoing'): ?>
+                                        <!-- Mark as Completed -->
+                                        <form action="complete_tournament.php" method="POST" onsubmit="return confirm('Mark this tournament as completed?');">
+                                            <input type="hidden" name="tournament_id" value="<?php echo $t['id']; ?>">
+                                            <button type="submit" class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700">
+                                                Mark as Completed
+                                            </button>
+                                        </form>
                                     <?php endif; ?>
+
 
                                     <!-- Edit Tournament -->
                                     <a href="edit_tournament.php?id=<?php echo $t['id']; ?>"

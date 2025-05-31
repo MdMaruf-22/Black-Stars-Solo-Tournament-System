@@ -48,5 +48,6 @@ foreach ($matches as $match) {
     $stmt->execute([$leagueId, $match[0], $match[1]]);
 }
 
+$stmt = $pdo->prepare("UPDATE leagues SET status = 'ongoing' WHERE id = ?");
+$stmt->execute([$leagueId]);
 echo "✅ Fixtures generated successfully. <a href='leagues.php'>Go back</a>";
-?>

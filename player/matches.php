@@ -6,25 +6,31 @@ if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
     exit;
 }
+if (!isset($_GET['league_id'])) {
+    echo "League ID not specified.";
+    exit;
+}
 
+$leagueId = $_GET['league_id'];
 $playerId = $_SESSION['user_id'];
 
-// Get matches where player is player1 or player2
 $stmt = $pdo->prepare("
     SELECT m.*, u1.username AS p1_name, u2.username AS p2_name, l.name AS league_name
     FROM matches m
     JOIN users u1 ON m.player1_id = u1.id
     JOIN users u2 ON m.player2_id = u2.id
     JOIN leagues l ON m.league_id = l.id
-    WHERE m.player1_id = ? OR m.player2_id = ?
+    WHERE (m.player1_id = ? OR m.player2_id = ?) AND m.league_id = ?
     ORDER BY m.id DESC
 ");
-$stmt->execute([$playerId, $playerId]);
+$stmt->execute([$playerId, $playerId, $leagueId]);
+
 $matches = $stmt->fetchAll();
 ?>
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>My Matches</title>
@@ -32,12 +38,13 @@ $matches = $stmt->fetchAll();
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
+
 <body class="bg-gray-100 min-h-screen py-10 px-4">
     <div class="max-w-4xl mx-auto">
         <h2 class="text-3xl font-bold text-center text-gray-800 mb-8">⚽ My Matches</h2>
         <div class="mt-8 text-center">
             <a href="dashboard.php"
-               class="text-blue-600 hover:underline text-sm">⬅ Back to Dashboard</a>
+                class="text-blue-600 hover:underline text-sm">⬅ Back to Dashboard</a>
         </div>
         <div class="space-y-6">
             <?php if (count($matches) === 0): ?>
@@ -72,8 +79,8 @@ $matches = $stmt->fetchAll();
 
                     <div class="mt-4">
                         <?php if ($match['player1_score'] === null && $match['player2_score'] === null): ?>
-                            <a href="submit_result.php?match_id=<?php echo $match['id']; ?>"
-                               class="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition duration-200">
+                            <a href="submit_result.php?match_id=<?php echo $match['id']; ?>&league_id=<?php echo $leagueId; ?>"
+                                class="inline-block bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition duration-200">
                                 ✅ Submit Result
                             </a>
                         <?php else: ?>
@@ -86,9 +93,9 @@ $matches = $stmt->fetchAll();
 
         <div class="mt-8 text-center">
             <a href="dashboard.php"
-               class="text-blue-600 hover:underline text-sm">⬅ Back to Dashboard</a>
+                class="text-blue-600 hover:underline text-sm">⬅ Back to Dashboard</a>
         </div>
     </div>
 </body>
-</html>
 
+</html>
